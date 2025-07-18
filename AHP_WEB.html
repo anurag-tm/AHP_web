@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Report: AHP Landslide Susceptibility Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8F7F4; /* Warm Neutral Background */
+            color: #4B4B4B;
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #D97706; /* Amber-600 */
+            border-bottom-color: #D97706;
+        }
+        .layer-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        .layer-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .layer-card.active {
+            border-color: #D97706;
+            background-color: #FFFBEB; /* Amber-50 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 450px;
+            max-height: 50vh;
+        }
+        .flowchart-step {
+            transition: all 0.3s ease;
+            border-left-width: 4px;
+        }
+        .flowchart-step:hover {
+            background-color: #FEF3C7; /* Amber-100 */
+            border-color: #F59E0B; /* Amber-500 */
+        }
+        .flowchart-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9CA3AF; /* Gray-400 */
+        }
+        .social-icon a {
+            transition: transform 0.2s, color 0.2s;
+        }
+        .social-icon a:hover {
+            transform: scale(1.1);
+            color: #D97706; /* Amber-600 */
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-gray-800">AHP Susceptibility Tool</h1>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#introduction" class="nav-link">Introduction</a>
+                <a href="#layers" class="nav-link">Thematic Layers</a>
+                <a href="#workflow" class="nav-link">Workflow</a>
+                <a href="#dependencies" class="nav-link">Dependencies</a>
+                <a href="#about" class="nav-link">About Me</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden text-gray-700 focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden px-6 pb-4">
+            <a href="#introduction" class="block py-2 nav-link">Introduction</a>
+            <a href="#layers" class="block py-2 nav-link">Thematic Layers</a>
+            <a href="#workflow" class="block py-2 nav-link">Workflow</a>
+            <a href="#dependencies" class="block py-2 nav-link">Dependencies</a>
+            <a href="#about" class="block py-2 nav-link">About Me</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+
+        <section id="introduction" class="mb-24 scroll-mt-20">
+            <h2 class="text-4xl font-bold text-center mb-4 text-gray-800">Landslide Susceptibility Mapping</h2>
+            <p class="text-lg text-center max-w-3xl mx-auto text-gray-600">
+                This interactive report details a Python-based desktop application for conducting landslide susceptibility analysis using the Analytical Hierarchy Process (AHP). The tool provides a user-friendly interface to input geospatial data, define parameters, classify layers, and generate a final susceptibility map.
+            </p>
+        </section>
+
+        <section id="layers" class="mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-2 text-gray-800">Thematic Layers Explained</h2>
+            <p class="text-center text-gray-600 mb-12">Click on a factor to explore its role in landslide analysis.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+                <div class="md:col-span-4">
+                    <div id="layer-cards-container" class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        </div>
+                </div>
+                <div id="layer-details-container" class="md:col-span-8 bg-white p-8 rounded-lg shadow-md min-h-[400px]">
+                    </div>
+            </div>
+        </section>
+
+        <section id="workflow" class="mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">Analysis Workflow</h2>
+            <div class="max-w-4xl mx-auto">
+                <div class="space-y-2">
+                    <div class="flowchart-step bg-white p-4 rounded-lg border-l-4 border-gray-200 flex items-center space-x-4">
+                        <div class="bg-amber-100 text-amber-700 rounded-full w-12 h-12 flex items-center justify-center font-bold text-xl flex-shrink-0">1</div>
+                        <div>
+                            <h3 class="font-bold text-lg">Data Input</h3>
+                            <p class="text-gray-600">Load DEM, Boundary Shapefile, and other optional vector layers (LULC, Geology, etc.).</p>
+                        </div>
+                    </div>
+                    <div class="flowchart-arrow pl-6 h-8"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg></div>
+                    <div class="flowchart-step bg-white p-4 rounded-lg border-l-4 border-gray-200 flex items-center space-x-4">
+                        <div class="bg-amber-100 text-amber-700 rounded-full w-12 h-12 flex items-center justify-center font-bold text-xl flex-shrink-0">2</div>
+                        <div>
+                            <h3 class="font-bold text-lg">Raster & Vector Processing</h3>
+                            <p class="text-gray-600">Calculate raster derivatives (Slope, Aspect, etc.) and classify all thematic layers based on user-defined scores.</p>
+                        </div>
+                    </div>
+                    <div class="flowchart-arrow pl-6 h-8"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg></div>
+                     <div class="flowchart-step bg-white p-4 rounded-lg border-l-4 border-gray-200 flex items-center space-x-4">
+                        <div class="bg-amber-100 text-amber-700 rounded-full w-12 h-12 flex items-center justify-center font-bold text-xl flex-shrink-0">3</div>
+                        <div>
+                            <h3 class="font-bold text-lg">AHP Combination</h3>
+                            <p class="text-gray-600">Combine the classified layers using user-assigned weights to calculate the final susceptibility index.</p>
+                        </div>
+                    </div>
+                    <div class="flowchart-arrow pl-6 h-8"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg></div>
+                    <div class="flowchart-step bg-white p-4 rounded-lg border-l-4 border-gray-200 flex items-center space-x-4">
+                        <div class="bg-amber-100 text-amber-700 rounded-full w-12 h-12 flex items-center justify-center font-bold text-xl flex-shrink-0">4</div>
+                        <div>
+                            <h3 class="font-bold text-lg">Output Generation</h3>
+                            <p class="text-gray-600">Generate and save the final susceptibility map as GeoTIFF, PNG, and PDF files.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="weights" class="mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-2 text-gray-800">AHP Layer Weights</h2>
+            <p class="text-center text-gray-600 mb-8">Default influence of each factor in the model. The sum must be 100.</p>
+            <div class="chart-container">
+                <canvas id="ahpWeightsChart"></canvas>
+            </div>
+        </section>
+
+        <section id="dependencies" class="mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-8 text-gray-800">Dependencies & Installation</h2>
+            <div class="max-w-2xl mx-auto bg-gray-800 rounded-lg p-6 shadow-lg">
+                <div class="flex justify-between items-center mb-4">
+                    <p class="text-gray-300 font-mono text-sm">bash</p>
+                    <button id="copy-button" class="bg-gray-600 text-white px-3 py-1 rounded-md text-sm hover:bg-gray-500 transition">Copy</button>
+                </div>
+                <pre><code id="code-block" class="text-white text-sm">pip install numpy geopandas rasterio scipy matplotlib shapely pandas fiona pyflwdir matplotlib-scalebar Pillow</code></pre>
+            </div>
+        </section>
+
+        <section id="about" class="scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-8 text-gray-800">About Me</h2>
+            <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8 flex flex-col md:flex-row items-center gap-8">
+                <div class="flex-shrink-0">
+                    <div class="w-40 h-40 bg-amber-100 rounded-full flex items-center justify-center">
+                        <svg class="w-24 h-24 text-amber-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path></svg>
+                    </div>
+                </div>
+                <div class="text-center md:text-left">
+                    <h3 class="text-3xl font-bold text-gray-800">Anurag Sharma</h3>
+                    <p class="text-amber-700 font-semibold mt-1">M.Sc. in Remote Sensing and GIS</p>
+                    <p class="mt-4 text-gray-600 max-w-lg">
+                      
+                    </p>
+                    <div class="mt-6 flex justify-center md:justify-start items-center space-x-6 text-gray-500">
+                        <div class="social-icon">
+                            <a href="mailto:anurag303sharma@jammuuniversity.ac.in" title="Email">
+                                <svg class="w-7 h-7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"></path></svg>
+                            </a>
+                        </div>
+                        <div class="social-icon">
+                             <a href="https://x.com/anurag0_07" target="_blank" rel="noopener noreferrer" title="X (Twitter)">
+                                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path d="M12.6.75h2.454l-5.36 6.142L16 15.25h-4.937l-3.867-5.07-4.425 5.07H.316l5.733-6.57L0 .75h5.063l3.495 4.633L12.601.75Zm-.86 13.028h1.36L4.323 2.145H2.865l8.875 11.633Z"/></svg>
+                            </a>
+                        </div>
+                        <div class="social-icon">
+                            <a href="https://instagram.com/anurag0.07" target="_blank" rel="noopener noreferrer" title="Instagram">
+                               <svg class="w-7 h-7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M7.8,2H16.2C19.4,2 22,4.6 22,7.8V16.2A5.2,5.2 0 0,1 16.2,21.4H7.8C4.6,21.4 2,18.8 2,15.6V7.8C2,4.6 4.6,2 7.8,2M7.6,4A3.6,3.6 0 0,0 4,7.6V16.4C4,18.39 5.61,20 7.6,20H16.4C18.39,20 20,18.39 20,16.4V7.6C20,5.61 18.39,4 16.4,4H7.6M17.25,5.5A1.25,1.25 0 0,1 18.5,6.75A1.25,1.25 0 0,1 17.25,8A1.25,1.25 0 0,1 16,6.75A1.25,1.25 0 0,1 17.25,5.5M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z" /></svg>
+                            </a>
+                        </div>
+                         <div class="social-icon">
+                             <a href="https://linkedin.com/in/anurag-sharma-3b0897375" target="_blank" rel="noopener noreferrer" title="LinkedIn">
+                                <svg class="w-7 h-7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white mt-20 border-t">
+        <div class="container mx-auto px-6 py-6 text-center text-gray-500">
+            <p>Interactive Report generated from AHP Susceptibility Tool Documentation.</p>
+            <p class="text-sm mt-2">&copy; 2025 Anurag Sharma. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- Data ---
+            const layerData = {
+                slope: {
+                    title: 'Slope',
+                    description: 'The steepness or gradient of the terrain. It is the most critical factor, as gravity has a greater effect on steeper slopes, increasing shear stress.',
+                    example: 'Think of a steep hiking trail versus a flat sidewalk. The steep trail is far more likely to have loose rocks fall.',
+                    processing: 'Calculated from the DEM using the Sobel filter to find the rate of change in elevation. The result is converted to degrees.',
+                    diagram: `<div class="w-full h-24 bg-gray-100 rounded-lg overflow-hidden relative mt-4">
+                                <div class="absolute bottom-0 left-0 w-full h-1/2 bg-green-200" style="clip-path: polygon(0% 100%, 100% 100%, 100% 30%, 0% 80%);"></div>
+                                <div class="absolute bottom-10 right-8 text-sm text-red-600 font-bold">35°</div>
+                                <div class="absolute bottom-4 right-4 border-b-2 border-l-2 border-red-600 w-12 h-8"></div>
+                              </div>`
+                },
+                aspect: {
+                    title: 'Aspect',
+                    description: 'The direction a slope faces (e.g., North, South). It influences sun exposure, moisture retention, and vegetation, which indirectly affect stability.',
+                    example: 'Imagine two sides of a mountain. The sunny, south-facing side is often drier with less vegetation, while the shady, north-facing side is damp. This difference in moisture affects stability.',
+                    processing: 'Determined from the DEM gradients using the `arctan2` function to accurately calculate the direction for all quadrants.',
+                    diagram: `<div class="w-full h-24 flex items-center justify-center bg-gray-100 rounded-lg mt-4">
+                                <div class="relative w-20 h-20 border-2 border-gray-300 rounded-full">
+                                    <div class="absolute top-1/2 left-1/2 w-1 h-8 bg-red-500 rounded -mt-8 -ml-0.5" style="transform-origin: bottom;"></div>
+                                    <span class="absolute top-0 left-1/2 -translate-x-1/2 -mt-5 text-xs font-bold">N</span>
+                                    <span class="absolute bottom-0 left-1/2 -translate-x-1/2 -mb-5 text-xs">S</span>
+                                    <span class="absolute top-1/2 right-0 -translate-y-1/2 -mr-5 text-xs">E</span>
+                                    <span class="absolute top-1/2 left-0 -translate-y-1/2 -ml-5 text-xs">W</span>
+                                </div>
+                              </div>`
+                },
+                curvature: {
+                    title: 'Curvature',
+                    description: 'The rate of change of the slope. Concave slopes collect water, increasing pore pressure, while convex slopes disperse it.',
+                    example: 'A bowl-shaped valley (concave) will collect rainwater, making the ground soggy and weak. A dome-shaped hill (convex) will shed water.',
+                    processing: 'Calculated by applying the Sobel filter twice to the DEM, which computes the second derivative of the surface.',
+                    diagram: `<div class="w-full h-24 flex justify-around items-center bg-gray-100 rounded-lg mt-4">
+                                <div>
+                                    <div class="w-20 h-12 border-2 border-blue-400 rounded-full border-t-transparent border-l-transparent border-r-transparent"></div>
+                                    <p class="text-xs text-center mt-1">Concave (Collects)</p>
+                                </div>
+                                <div>
+                                    <div class="w-20 h-12 border-2 border-red-400 rounded-full border-b-transparent border-l-transparent border-r-transparent"></div>
+                                    <p class="text-xs text-center mt-1">Convex (Sheds)</p>
+                                </div>
+                              </div>`
+                },
+                relative_relief: {
+                    title: 'Relative Relief',
+                    description: 'The difference in elevation within a local area, representing terrain ruggedness. High relief indicates higher landslide potential.',
+                    example: 'A landscape with deep valleys and sharp peaks (high relief) is more unstable than a gently rolling plain (low relief).',
+                    processing: 'A moving window finds the maximum and minimum elevation in a neighborhood to calculate the local difference.',
+                    diagram: ''
+                },
+                twi: {
+                    title: 'Topographic Wetness Index (TWI)',
+                    description: 'Quantifies the tendency of water to accumulate. High TWI values indicate saturated soil, which reduces shear strength.',
+                    example: 'This helps find the wettest parts of a landscape, like the bottom of a gully, which are often the weakest.',
+                    processing: 'Calculated using the formula: `ln( (Specific Catchment Area) / tan(Slope) )`.',
+                    diagram: ''
+                },
+                drainage_density: {
+                    title: 'Drainage Density',
+                    description: 'Proximity to the natural drainage network. Areas near rivers are more susceptible due to toe erosion and higher soil moisture.',
+                    example: 'A slope right next to a river is more at risk because the river can wash away the base of the slope, causing it to collapse.',
+                    processing: 'The stream network is delineated from the DEM, and then Euclidean distance from every pixel to the nearest stream is calculated.',
+                    diagram: ''
+                },
+                road_distance: {
+                    title: 'Distance from Roads',
+                    description: 'A human-made factor. Road cuts can over-steepen slopes, removing support and increasing instability.',
+                    example: 'When a road is cut into a hillside, the slope above the road loses its support and can become unstable.',
+                    processing: 'Euclidean distance is calculated from every pixel to the nearest road feature from a user-provided shapefile.',
+                    diagram: ''
+                },
+                lulc: {
+                    title: 'Land Use/Land Cover',
+                    description: 'Describes how land is used (e.g., forest, urban, barren). Dense forests with deep roots increase slope stability, while barren land is more susceptible to erosion.',
+                    example: 'A forested slope is held together by tree roots, like rebar in concrete. A bare slope is like loose sand, easily washed away.',
+                    processing: 'The user classifies different land use types from a shapefile, assigning a susceptibility score to each. The tool then converts this into a raster.',
+                    diagram: `<div class="w-full h-24 grid grid-cols-3 gap-2 bg-gray-100 rounded-lg p-2 mt-4">
+                                <div class="bg-green-500 rounded flex items-center justify-center text-white text-xs font-bold">Forest</div>
+                                <div class="bg-gray-400 rounded flex items-center justify-center text-white text-xs font-bold">Urban</div>
+                                <div class="bg-yellow-700 rounded flex items-center justify-center text-white text-xs font-bold">Barren</div>
+                              </div>`
+                },
+                geology: {
+                    title: 'Geology',
+                    description: 'Refers to the underlying rock formations and structures. Unconsolidated or heavily fractured formations are less stable than solid bedrock.',
+                    example: 'Building on solid granite is much safer than building on a mix of loose gravel and sand (alluvium).',
+                    processing: 'Geological units from a shapefile are classified by the user, who assigns a risk score to each formation.',
+                    diagram: `<div class="w-full h-24 bg-gray-100 rounded-lg p-2 mt-4 relative overflow-hidden">
+                                <div class="h-1/3 bg-yellow-600/50 w-full"></div>
+                                <div class="h-1/3 bg-gray-500/50 w-full"></div>
+                                <div class="h-1/3 bg-orange-800/50 w-full"></div>
+                                <p class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-700 font-semibold">Strata</p>
+                              </div>`
+                },
+                lithology: {
+                    title: 'Lithology',
+                    description: 'Focuses on the physical characteristics of rock (e.g., shale, sandstone). Weak, soft, or weathered rocks have low shear strength and are prone to failure.',
+                    example: 'Some rocks, like shale, are made of thin, weak layers that can easily slide apart, like a stack of wet paper. Granite is a single, strong block.',
+                    processing: 'Different lithological types are classified and scored by the user based on their known strength and weathering characteristics.',
+                    diagram: `<div class="w-full h-24 grid grid-cols-2 gap-2 bg-gray-100 rounded-lg p-2 mt-4">
+                                <div class="bg-gray-600 rounded flex items-center justify-center text-white text-xs p-1">Shale (Weak)</div>
+                                <div class="bg-yellow-500 rounded flex items-center justify-center text-black text-xs p-1">Sandstone</div>
+                              </div>`
+                },
+                geomorphology: {
+                    title: 'Geomorphology',
+                    description: 'The study of landforms. Features like alluvial fans, old landslide deposits, or steep escarpments have different stability characteristics.',
+                    example: 'An area that shows signs of old, past landslides is very likely to have another one in the same place.',
+                    processing: 'Geomorphological units are classified and scored based on their inherent stability. An old landslide scar would receive a high score.',
+                    diagram: ''
+                },
+                fault_density: {
+                    title: 'Fault Density',
+                    description: 'Measures the concentration of geological faults. Faults are zones of weakness in the rock mass, making faulted areas more susceptible.',
+                    example: 'Imagine a ceramic plate. A solid plate is strong. A plate with many cracks (faults) is very easy to break.',
+                    processing: 'Calculated from a fault line shapefile, often using Kernel Density to create a raster representing fault concentration.',
+                    diagram: `<div class="w-full h-24 bg-gray-100 rounded-lg mt-4 relative">
+                                <div class="absolute top-4 left-4 w-0.5 h-16 bg-red-500 transform rotate-12"></div>
+                                <div class="absolute top-2 right-8 w-0.5 h-20 bg-red-500 transform -rotate-12"></div>
+                                <div class="absolute bottom-2 right-12 w-0.5 h-12 bg-red-500 transform rotate-6"></div>
+                             </div>`
+                },
+            };
+
+            const weightsData = {
+                labels: ["Slope", "Aspect", "Curvature", "Relative Relief", "TWI", "Drainage Density", "Road Distance", "Lithology", "Fault Density", "Geology", "Geomorph", "LULC"],
+                weights: [15, 5, 5, 10, 10, 10, 5, 10, 5, 10, 10, 10]
+            };
+
+            // --- Elements ---
+            const layerCardsContainer = document.getElementById('layer-cards-container');
+            const layerDetailsContainer = document.getElementById('layer-details-container');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main > section');
+            const copyButton = document.getElementById('copy-button');
+            const codeBlock = document.getElementById('code-block');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            // --- Functions ---
+            const displayLayerDetails = (layerKey) => {
+                const data = layerData[layerKey];
+                if (!data) return;
+
+                layerDetailsContainer.innerHTML = `
+                    <h3 class="text-2xl font-bold mb-4 text-gray-800">${data.title}</h3>
+                    <p class="text-gray-600 mb-4">${data.description}</p>
+                    <div class="p-4 bg-amber-50 rounded-lg border-l-4 border-amber-400 mb-4">
+                        <h4 class="font-semibold text-gray-700">Simple Example:</h4>
+                        <p class="text-gray-600 mt-1">${data.example}</p>
+                    </div>
+                    <h4 class="font-semibold text-lg mb-2 text-gray-700">How it's processed:</h4>
+                    <p class="text-gray-600 mb-4">${data.processing}</p>
+                    ${data.diagram ? data.diagram : ''}
+                `;
+                
+                document.querySelectorAll('.layer-card').forEach(card => card.classList.remove('active'));
+                document.querySelector(`.layer-card[data-layer="${layerKey}"]`).classList.add('active');
+            };
+            
+            const createLayerCards = () => {
+                Object.keys(layerData).forEach(key => {
+                    const card = document.createElement('div');
+                    card.className = 'layer-card bg-white p-4 rounded-lg border-2 border-transparent text-center h-24 flex items-center justify-center';
+                    card.dataset.layer = key;
+                    card.innerHTML = `<h4 class="font-semibold">${layerData[key].title}</h4>`;
+                    card.addEventListener('click', () => displayLayerDetails(key));
+                    layerCardsContainer.appendChild(card);
+                });
+            };
+
+            const createAHPChart = () => {
+                const ctx = document.getElementById('ahpWeightsChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: weightsData.labels,
+                        datasets: [{
+                            label: 'AHP Weight (%)',
+                            data: weightsData.weights,
+                            backgroundColor: '#FBBF24', // Amber-400
+                            borderColor: '#D97706', // Amber-600
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return ` Weight: ${context.raw}%`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Weight (%)'
+                                }
+                            }
+                        }
+                    }
+                });
+            };
+
+            const handleScroll = () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 80) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    const linkHref = link.getAttribute('href');
+                    if (linkHref && linkHref.includes(current)) {
+                        link.classList.add('active');
+                    }
+                });
+            };
+
+            // --- Event Listeners ---
+            copyButton.addEventListener('click', () => {
+                navigator.clipboard.writeText(codeBlock.innerText).then(() => {
+                    copyButton.innerText = 'Copied!';
+                    setTimeout(() => {
+                        copyButton.innerText = 'Copy';
+                    }, 2000);
+                });
+            });
+
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            // Close mobile menu when a link is clicked
+            mobileMenu.addEventListener('click', (e) => {
+                if(e.target.tagName === 'A') {
+                    mobileMenu.classList.add('hidden');
+                }
+            });
+
+            window.addEventListener('scroll', handleScroll);
+
+            // --- Initial Load ---
+            createLayerCards();
+            displayLayerDetails('slope');
+            createAHPChart();
+            handleScroll();
+        });
+    </script>
+</body>
+</html>
